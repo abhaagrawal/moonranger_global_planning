@@ -1,25 +1,27 @@
-% Rounak Baheti
-% 03.29.21
+% Lydia Schweitzer
+% 02.07.2021
 
-%% General Variables
+% Ron Baheti
+% 04.21.2021
 
-slopeLimit1 = 10; % Angle in degrees
-lightingLimit1 = 0.7; % Cut-off Fraction
 
-% Landing Site Coordinates
+%% 0) general variables
 
-x_len = 15; % Number of pixels in x-direction from the landing site. Give additional clearance
-y_len = 15; % Number of pixels in y-direction from the landing site. Give additional clearance
+lat = -86.7943;
+lon = -21.1864;
 
-ax2 = [-150,150,-150,150];
-HawSite1Lat = -86.7943;
-HawSite1Lon = -21.1864;
-[HawSitePX,HawSitePY] = latlon2pixel_Haw(HawSite1Lat,HawSite1Lon);
+disp('generating variables...')
+color1 = bone;
+color2 = parula;
+color3 = gray;
+color4 = hot;
 
-ViableMap = [floor(HawSitePX-x_len),ceil(HawSitePX+x_len),floor(HawSitePY-y_len),ceil(HawSitePY+y_len)];
-ViableMapLen = [ceil(HawSitePX+x_len) - floor(HawSitePX-x_len),ceil(HawSitePY+y_len)-floor(HawSitePY-y_len)];
-%% Datasets
+slopeLimit1 = 10;
 
+lightingLimit1 = 0.7;
+disp('...done')
+
+%% 1) load file variables
 disp('loading file variables...')
 
 load('SP_40m_net_sun_and_sun-plus-dte_2022-12-05_to_2022-12-21_3limb');
@@ -27,7 +29,14 @@ res = 40; % 40 mpp
 
 disp('...done')
 
-%% Load datasets
+%% 2) load landing site axis variables
+disp('loading site variables...')
+ax2 = [-150,150,-150,150];
+%hawSite1 = [3.552940515834119e+03,3.565968374887526e+03,3.009929315827561e+03,3.021406931186126e+03];
+%hawSite1Big = [-35.291909278653776,-34.896672416655660,90.430352566217750,90.825589428215850];
+disp('...done')
+
+%% 3) load datasets
 disp('loading datasets...')
 elevation = imread('ldem_80S_40m.jp2');
 [pixelX1, pixelY1] = size(elevation);
@@ -39,20 +48,20 @@ y = x;
 % to change the variable type
 elevation = single(elevation);
 elevation = elevation*.5;
-elevation = flipud(elevation); 
+elevation = flipud(elevation);
 % min and max elevations in meters
 minimum1 = min(elevation, [], 'all');
 maximum1 = max(elevation, [], 'all');
 
 % calculate gradient
-    % 10 because posting is 10 m
-    [gx, gy] = gradient(elevation, 40);
-    % use something.^ to apply exponentiation to the whole matrix
-    slope = rad2deg(atan(sqrt(gx.^2 + gy.^2)));
-    
+% 10 because posting is 10 m
+[gx, gy] = gradient(elevation, 40);
+% use something.^ to apply exponentiation to the whole matrix
+slope = rad2deg(atan(sqrt(gx.^2 + gy.^2)));
+
 xx=0.04*[1:size(bholdmi,1)]; % creates a polar stereographic vector axis for this array
-    % QUESTION - where is the 0.04 coming from?
-    % >> the posting size in km (40 m)
+% QUESTION - where is the 0.04 coming from?
+% >> the posting size in km (40 m)
 
 xx = xx-mean(xx); % it’s symmetric about the pole
 yy=xx; %same on y axis
@@ -61,88 +70,94 @@ fractionLit = bholdi.*delday./dur; % this is just sun (WHAT YOU WANT)
 fractionLit2 = bholdmi.*delday./dur; % this is sun and comm
 disp('...done')
 
-%% Constructing viable maps
+%% 5) construct viable maps
 disp('combining lighting and slopes...')
 
 % score lighting
 % adjust limit, adjust limitType
 disp('beginning lighting and slope')
 % all lighting maps
-lightingLimitType = 'upper';
+lightingLimitType = 'lower';
 lightingMap1 = getBestParam(fractionLit, lightingLimit1, lightingLimitType);
 
 % score slopes
-slopeLimitType = 'lower';
+slopeLimitType = 'upper';
 slopeMap1 = getBestParam(slope, slopeLimit1, slopeLimitType);
 disp('done')
+
 disp('beginning combined maps')
 % combine fn keeps all 0's as 0 but retains all viable values within limit
+%%
+zoomR = 600/res;
+[hawPixelX, hawPixelY] = latlon2pixel_Haw(lat,lon);
+hawC = [hawPixelX, hawPixelY];
+hawaxis = [hawPixelX - zoomR, hawPixelX + zoomR, hawPixelY - zoomR, hawPixelY + zoomR];
 combined_S15_L70 = combine(lightingMap1, slopeMap1);
-
+figure(10)
+imagesc(combined_S15_L70)
+axis(hawaxis)
 disp('...done')
 
-%% Creating map file
-
-viableMapWithBorder = combined_S15_L70;
-for i = 2:1:length(combined_S15_L70(:,1))-2
-    for j = 2:1:length(combined_S15_L70(1,:))-2
-        if ((combined_S15_L70(i,j)==0) && ((combined_S15_L70(i+1,j)==1||combined_S15_L70(i,j+1)==1||combined_S15_L70(i,j-1)==1||combined_S15_L70(i-1,j)==1||combined_S15_L70(i-1,j-1)==1||combined_S15_L70(i-1,j+1)==1||combined_S15_L70(i+1,j-1)==1||combined_S15_L70(i+1,j+1)==1)))
-            viableMapWithBorder(i,j) = 1;
+%% Creating distortion boundary
+combine_with_border = combined_S15_L70;
+for i = 2:15200-1
+    for j = 2:15200-1
+        if (combined_S15_L70(i,j)==1 && (combined_S15_L70(i+1,j)==0 || combined_S15_L70(i-1,j)==0 || combined_S15_L70(i,j+1)==0 || combined_S15_L70(i,j-1)==0 || combined_S15_L70(i+1,j+1)==0 || combined_S15_L70(i-1,j+1)==0 || combined_S15_L70(i+1,j-1)==0 || combined_S15_L70(i-1,j-1)==0 ))
+            combine_with_border(i,j)=0;
         end
     end
 end
-%% Without borders - create image
 
-figure(1)
-imagesc(combined_S15_L70(ViableMap(3):ViableMap(4),ViableMap(1):ViableMap(2)));
-%axis(ViableMap)
-colorbar;
+%% Small Map
 
-%% With borders - create image
+smallmap = combined_S15_L70(floor(hawPixelY - zoomR): ceil(hawPixelY + zoomR),floor(hawPixelX - zoomR): ceil(hawPixelX + zoomR));
+figure(25);
+map = smallmap;
+map(smallmap==0)=1;
+map(smallmap==1)=0;
+imagesc(map);
 
-figure(2)
-imagesc(viableMapWithBorder);
-axis(ViableMap)
-colorbar;
+writematrix(map,'map.txt','Delimiter',' ')
 
-%% With borders - create file
-
-figure(3)
-imagesc(viableMapWithBorder(ViableMap(3): ViableMap(4),ViableMap(1): ViableMap(2)));
-%dlmwrite('ViableMap.txt', viableMapWithBorder(ViableMap(3): ViableMap(4),ViableMap(1): ViableMap(2)));
-
-%% Functions
+%% 4) functions
 disp('generating functions...')
 % get best parameter matrix (lighting or slope)
 % mat = type matrix, original map of data
 % limit = number, must understand the max and mins of your matrix, enter a
 % lower or upper limit considering that matrix
 % limitType = 'upper' or 'lower' for the limit you gave
-function [bestParamMat] = getBestParam(mat, limit, limitType)
-    % filter out no-go areas
-    bestParamMat = mat;
-    if limitType == 'upper'
-        bestParamMat(mat >= limit) = 0; 
-        bestParamMat(mat < limit) = 1;
-    elseif limitType == 'lower'
-        bestParamMat(mat > limit) = 1;
-        bestParamMat(mat <= limit ) = 0;
-    else
-        disp('please change limitType to <upper> or <lower> as a str')
+    function [bestParamMat] = getBestParam(mat, limit, limitType)
+        % filter out no-go areas
+        bestParamMat = mat;
+        if limitType == 'upper'
+            % Above the limit is a no-go
+            bestParamMat(mat >= limit) = 0;
+            % Below the limit is a go
+            bestParamMat(mat < limit) = 1;%(bestParamMat/-matMax) + 1;
+        elseif limitType == 'lower'
+            % Below the limit is a no-go
+            bestParamMat(mat <= limit) = 0;
+            % Below the limit is a go
+            bestParamMat(mat > limit) = 1;%bestParamMat/matMax;
+        else
+            disp('please change limitType to <upper> or <lower> as a str')
+        end
     end
-end
 
 % combine matrices
-function [combinedMat] = combine(mat1, mat2)
-   combinedMat = mat1 .* mat2;
-end
+    function [combinedMat] = combine(mat1, mat2)
+        combinedMat = mat1 .* mat2;
+    end
 
 % get slope from elevation
-function [slope] = getSlope(elevationMat)
-    disp('creating slope from elevation . . .')
-    % 40 because posting is 40 m
-    [gx, gy] = gradient(elevationMat, 40);
-    % use something.^ to apply exponentiation to the whole matrix
-    slope = rad2deg(atan(sqrt(gx.^2 + gy.^2)));
-    disp('done')
-end
+    function [slope] = getSlope(elevationMat)
+        disp('creating slope from elevation . . .')
+        % 40 because posting is 40 m
+        [gx, gy] = gradient(elevationMat, 40);
+        % use something.^ to apply exponentiation to the whole matrix
+        slope = rad2deg(atan(sqrt(gx.^2 + gy.^2)));
+        disp('done')
+    end
+
+return
+
