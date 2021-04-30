@@ -29,14 +29,7 @@ res = 40; % 40 mpp
 
 disp('...done')
 
-%% 2) load landing site axis variables
-disp('loading site variables...')
-ax2 = [-150,150,-150,150];
-%hawSite1 = [3.552940515834119e+03,3.565968374887526e+03,3.009929315827561e+03,3.021406931186126e+03];
-%hawSite1Big = [-35.291909278653776,-34.896672416655660,90.430352566217750,90.825589428215850];
-disp('...done')
-
-%% 3) load datasets
+%% 2) load datasets
 disp('loading datasets...')
 elevation = imread('ldem_80S_40m.jp2');
 [pixelX1, pixelY1] = size(elevation);
@@ -63,14 +56,14 @@ xx=0.04*[1:size(bholdmi,1)]; % creates a polar stereographic vector axis for thi
 % QUESTION - where is the 0.04 coming from?
 % >> the posting size in km (40 m)
 
-xx = xx-mean(xx); % it’s symmetric about the pole
+xx = xx-mean(xx); % itâ€™s symmetric about the pole
 yy=xx; %same on y axis
 
 fractionLit = bholdi.*delday./dur; % this is just sun (WHAT YOU WANT)
 fractionLit2 = bholdmi.*delday./dur; % this is sun and comm
 disp('...done')
 
-%% 5) construct viable maps
+%% 3) construct viable maps
 disp('combining lighting and slopes...')
 
 % score lighting
@@ -86,7 +79,6 @@ slopeMap1 = getBestParam(slope, slopeLimit1, slopeLimitType);
 disp('done')
 
 disp('beginning combined maps')
-% combine fn keeps all 0's as 0 but retains all viable values within limit
 %%
 zoomR = 600/res;
 [hawPixelX, hawPixelY] = latlon2pixel_Haw(lat,lon);
@@ -98,7 +90,7 @@ imagesc(combined_S15_L70)
 axis(hawaxis)
 disp('...done')
 
-%% Creating distortion boundary
+%% 4) Creating distortion boundary
 combine_with_border = combined_S15_L70;
 for i = 2:15200-1
     for j = 2:15200-1
@@ -108,18 +100,18 @@ for i = 2:15200-1
     end
 end
 
-%% Small Map
+%% 5) Saving Maps as .txt files
 
 smallmap = combined_S15_L70(floor(hawPixelY - zoomR): ceil(hawPixelY + zoomR),floor(hawPixelX - zoomR): ceil(hawPixelX + zoomR));
-figure(25);
+
 map = smallmap;
 map(smallmap==0)=1;
 map(smallmap==1)=0;
-imagesc(map);
 
-writematrix(map,'map.txt','Delimiter',' ')
+writematrix(smallmap,'map_MS.txt','Delimiter',' ')
+writematrix(map,'map_SBPL.txt','Delimiter',' ')
 
-%% 4) functions
+%% 6) functions
 disp('generating functions...')
 % get best parameter matrix (lighting or slope)
 % mat = type matrix, original map of data
@@ -160,4 +152,3 @@ disp('generating functions...')
     end
 
 return
-
