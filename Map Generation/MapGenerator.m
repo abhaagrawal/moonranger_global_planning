@@ -4,6 +4,7 @@
 % Ron Baheti
 % 04.21.2021
 
+% NOTE: Additional file required: latlon2pixel_Haw.m
 
 %% 0) general variables
 
