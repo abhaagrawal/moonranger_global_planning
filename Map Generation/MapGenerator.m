@@ -7,6 +7,7 @@
 
 %% 0) general variables
 
+% Location of landing site (Coordinates avaiable on QuickMap - ask Lydia for more information)
 lat = -86.7943;
 lon = -21.1864;
 
@@ -16,22 +17,25 @@ color2 = parula;
 color3 = gray;
 color4 = hot;
 
-slopeLimit1 = 10;
+% Define threshold values
+slopeLimit1 = 10; %10 degrees max slope
+lightingLimit1 = 0.7; %70% illumination
 
-lightingLimit1 = 0.7;
 disp('...done')
 
 %% 1) load file variables
 disp('loading file variables...')
 
-load('SP_40m_net_sun_and_sun-plus-dte_2022-12-05_to_2022-12-21_3limb');
+load('SP_40m_net_sun_and_sun-plus-dte_2022-12-05_to_2022-12-21_3limb'); % File located in Google drive: https://drive.google.com/drive/u/1/folders/1oFykYMGGUwnlsvn1Xucs0b96ln_8hQQV
 res = 40; % 40 mpp
 
 disp('...done')
 
 %% 2) load datasets
 disp('loading datasets...')
-elevation = imread('ldem_80S_40m.jp2');
+% Scale the elevation map and convert to slope map
+
+elevation = imread('ldem_80S_40m.jp2'); % File located in Google drive: https://drive.google.com/drive/u/1/folders/1oFykYMGGUwnlsvn1Xucs0b96ln_8hQQV
 [pixelX1, pixelY1] = size(elevation);
 xRange1 = [1:pixelX1];
 xScaled1 = xRange1*0.01;
@@ -79,7 +83,7 @@ slopeMap1 = getBestParam(slope, slopeLimit1, slopeLimitType);
 disp('done')
 
 disp('beginning combined maps')
-%%
+% Find coordinates of map of landing site (entire range and not just a single cell)
 zoomR = 600/res;
 [hawPixelX, hawPixelY] = latlon2pixel_Haw(lat,lon);
 hawC = [hawPixelX, hawPixelY];
@@ -90,7 +94,7 @@ imagesc(combined_S15_L70)
 axis(hawaxis)
 disp('...done')
 
-%% 4) Creating distortion boundary
+%% 4) Creating distortion boundary (safety boundary)
 combine_with_border = combined_S15_L70;
 for i = 2:15200-1
     for j = 2:15200-1
