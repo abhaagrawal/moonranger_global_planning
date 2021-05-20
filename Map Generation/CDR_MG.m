@@ -1,3 +1,5 @@
+%% NOTE: This code is outdated
+
 % Lydia Schweitzer
 % 02.07.2021
 
@@ -54,7 +56,7 @@ xx=0.04*[1:size(bholdmi,1)]; % creates a polar stereographic vector axis for thi
     % QUESTION - where is the 0.04 coming from?
     % >> the posting size in km (40 m)
 
-xx = xx-mean(xx); % it’s symmetric about the pole
+xx = xx-mean(xx); % itâ€™s symmetric about the pole
 yy=xx; %same on y axis
 
 fractionLit = bholdi.*delday./dur; % this is just sun (WHAT YOU WANT)
@@ -65,7 +67,7 @@ disp('...done')
 disp('viewing all global maps...')
 % LIGHTING:
     figure(11); 
-    imagesc(fractionLit); % map of fraction of time in the Dec 7 – 18, 2022 timeframe that both sun & comm are available.
+    imagesc(fractionLit); % map of fraction of time in the Dec 7 â€“ 18, 2022 timeframe that both sun & comm are available.
     axis equal;
     colorbar;
     colormap(jet);
