@@ -5,7 +5,7 @@ function[] = MoonShine_Visualization(solfilename, mapfilename, ~)
 
 % Read in map and solution
 x = load(solfilename); %solfilename is a solution file created in the build folder once MS is run
-map = load(mapfilename); %mapfilename is the map text file created using the map generator code
+map = load(mapfilename); %mapfilename is the map text file created using the map generator code (MapGenerator.m)
 
 % Plot map
 figure(1);
